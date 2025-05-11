@@ -15,28 +15,13 @@ def create_grid():
 
 def print_grid(grid):
     
-    
-    #num_cols = ((len(grid[0]) + 1) // 2)  # Calculate number of columns based on grid width
-    #print("   ", end="")  # Initial spacing for column headers
-    #print(columnHeader)
-    """
-    for col in range(1, num_cols + 1):
-        print(f"{col:>2}", end="  ")  # Print column headers (1 to N), right-aligned
-        """
     columnHeader = lambda grid: (print("   " + "  ".join([f"{col:>2}" for col in range(1, (len(grid[0]) + 1) // 2 + 1)])))
     columnHeader(grid)
     
     
     printRows = lambda grid: list(map(lambda t: print((f"{t[0] // 2 + 1:>2}  " if t[0] % 2 == 0 else "    ") + "".join(t[1])), enumerate(grid)))
     printRows(grid)
-    """
-    for r_idx, row in enumerate(grid):
-        if r_idx % 2 == 0:
-            label = f"{r_idx // 2 + 1:>2}  "  # Row headers on grid lines
-        else:
-            label = "    "  # No row header on cell lines
-        print(label + "".join(row))  # Print the full row with its label
-    """
+   
     
         
 def main():
