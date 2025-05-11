@@ -13,16 +13,9 @@ ID 23178823
 
 """
 
-def create_grid(rows=14, cols=14):
-    """
-    line = lambda r, c: ('+' if r % 2 == 0 and c % 2 == 0 else '---' if r % 2 == 0 else '|' if c % 2 == 0 else '   ')
-    
-    grid = [[line(r, c) for c in range(cols * 2 + 1)]for r in range(rows * 2 + 1)]
-    
-    return grid
-    """
-    
-    
+def create_grid():
+    rows: int=14 
+    cols: int=14
     symbols = {
         (0, 0): '+',     # intersection
         (0, 1): '---',   # horizontal line
@@ -44,19 +37,29 @@ def print_grid(grid):
     
     return columnHeader(grid),printRows(grid)
 
-def change_plus(grid, row, col, new_char):
-    
-    # Convert 1-based user input into actual grid indices (2x spacing)
-    r = (row - 1) * 2
-    c = (col - 1) * 2
-    # Validate the location and ensure it's a '+'
-    if 0 <= r < len(grid) and 0 <= c < len(grid[0]) and grid[r][c] == '+':
-        grid[r][c] = new_char  # Replace the '+' with the player's character
-        print(f"✅ Changed '+' at ({row}, {col}) to '{new_char}'")
-        return r, c  # Return grid indices for win checking
+def get_grid_index(row, col):
+    """Convert user-facing 1-based coordinates to grid indices."""
+    return (row - 1) * 2, (col - 1) * 2
+
+def is_valid_position(grid, r, c):
+    """Check if the position is within bounds and has a '+'."""
+    return (0 <= r < len(grid) and 0 <= c < len(grid[0]) and grid[r][c] == '+')
+
+def update_grid(grid, r, c, new_char):
+    """Replace the '+' at position (r, c) with the new character."""
+    return grid[r][:c] + [new_char] + grid[r][c + 1:]
+
+def place_stone(grid, row, col, new_char):
+    """Wrapper to handle user input and modify grid if valid."""
+    r, c = get_grid_index(row, col)
+    if is_valid_position(grid, r, c):
+        grid[r] = update_grid(grid, r, c, new_char)
+        print(f"")
+        return r, c
     else:
-        print(f"❗ No '+' found at that position.")
-        return None, None  # Invalid move
+        print("Not a valid placement")
+        
+
     
    
 def count_direction(grid,dr, dc,r,c, target_char):
@@ -71,7 +74,7 @@ def count_direction(grid,dr, dc,r,c, target_char):
         else:
             break
     return count
-def check_win(grid, r, c, target_char, length=5):
+def check_win(grid, r, c, players):
     # Helper to count matching characters in a direction
     
 
@@ -84,33 +87,35 @@ def check_win(grid, r, c, target_char, length=5):
     ]
 
     # For each direction, check both forward and backward counts
-    for dr, dc in directions:
+    for dRow, dColumn in directions:
         total = 1  # Start with the placed marker
-        total += count_direction(grid,dr, dc,r,c,target_char)       # Count forward
-        total += count_direction(grid,-dr, -dc,r,c,target_char)     # Count backward
-        if total >= length:
-            print(f"\n🎉 Player wins with {length} in a row!")
+        total += count_direction(grid,dRow, dColumn,r,c,players)       # Count forward
+        total += count_direction(grid,-dRow, -dColumn,r,c,players)     # Count backward
+        if total >= 5:
+            print(f"\n Player wins with {length} in a row!")
             return True  # Win detected
     return False  # No win yet
 
 def choose_player_colour():
-    playerInput = input("do you wish to play as Black (1st) or White (2nd) (B/W): ")
-    whitelist = ['b','w','B','W']
-    if(playerInput in whitelist):
-        if(playerInput.capitalize() == 'B'):
-            return playerInput.capitalize()
-    else:
-        print("Please type B or W")
-        choose_player_colour()
-    
+    """Ask Player 1 to choose 'B' or 'W', assign the other to Player 2."""
+    valid_choices = {'B', 'W'}
+    while True:
+        choice = input("Player 1, do you want to be Black (B) or White (W)? ").upper()
+        if choice in valid_choices:
+            player1 = choice
+            player2 = (valid_choices - {choice}).pop()  # Get the other symbol
+            print(f" Player 1 is '{player1}', Player 2 is '{player2}'")
+            return player1, player2
+        else:
+            print(" Invalid choice. Please enter 'B' or 'W'.")
+
     
 
 def main():
-    player1: str = ""
     
-    playerColour = choose_player_colour()
+    players = choose_player_colour()
     grid = create_grid()  # Initialize the grid
-    
+    print(players)
     while True:
         print_grid(grid)  # Show the current grid state
         try:
@@ -124,11 +129,8 @@ def main():
             if len(new_char) != 1:
                 print("Enter a single character only.")
                 continue
-            r, c = change_plus(grid, row, col, new_char)  # Place move
-            if r is not None:
-                if check_win(grid, r, c, new_char):  # Check for a win
-                    print_grid(grid)
-                    break  # End game on win
+            r,c = place_stone(grid, row, col, new_char)
+            break  # End game on win
         except ValueError:
             print("Invalid input. Use numbers for coordinates.")
         except KeyboardInterrupt:
