@@ -122,6 +122,8 @@ def get_user_placement():
 def get_current_stone(players, playerTurn):
     return players[playerTurn]
 
+
+"""
 def handle_turn(grid, players, playerTurn):
     #current_stone = get_current_stone(players, playerTurn)
     
@@ -158,6 +160,55 @@ def handle_turn(grid, players, playerTurn):
 
     
     return playerTurn
+"""
+
+def get_current_player_label(playerTurn, players):
+    is_first_turn = playerTurn == 0
+    if is_first_turn and get_current_stone(players, playerTurn) == 'W':
+        return "Player 2, Black"
+    elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'W':
+        return "Player 1, White"
+    elif is_first_turn and get_current_stone(players, playerTurn) == 'B':
+        return "Player 1, Black"
+    elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'B':
+        return "Player 2, White"
+    return "Unknown Player"
+
+
+def get_effective_turn(playerTurn, players):
+    is_first_turn = playerTurn == 0
+    if is_first_turn and get_current_stone(players, playerTurn) == 'W':
+        return playerTurn + 1
+    elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'W':
+        return playerTurn - 1
+    elif is_first_turn and get_current_stone(players, playerTurn) == 'B':
+        return playerTurn
+    elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'B':
+        return playerTurn
+    return playerTurn  # fallback
+
+
+def update_turn(playerTurn):
+    return playerTurn + 1 if playerTurn == 0 else playerTurn - 1
+
+
+def perform_move(grid, stone):
+    choiceRow, choiceCol = get_user_placement()
+    return place_stone(grid, choiceRow, choiceCol, stone)
+
+
+def handle_turn(grid, players, playerTurn):
+    print(get_current_player_label(playerTurn, players))
+    
+    effective_turn = get_effective_turn(playerTurn, players)
+    stone = get_current_stone(players, effective_turn)
+    
+    row, col = perform_move(grid, stone)
+    
+    
+    check_win(grid, row, col, stone)
+    
+    return update_turn(playerTurn)
 
 def game_engine(grid, players, playerTurn):
     
