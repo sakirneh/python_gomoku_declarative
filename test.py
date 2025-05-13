@@ -92,7 +92,7 @@ def check_win(grid, r, c, players):
         total += count_direction(grid,dRow, dColumn,r,c,players)       # Count forward
         total += count_direction(grid,-dRow, -dColumn,r,c,players)     # Count backward
         if total >= 5:
-            print(f"\n Player wins with {length} in a row!")
+            print(f"\n Player wins with 5 in a row!")
             return True  # Win detected
     return False  # No win yet
 
