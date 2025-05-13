@@ -126,36 +126,38 @@ def handle_turn(grid, players, playerTurn):
     #current_stone = get_current_stone(players, playerTurn)
     
     is_first_turn = (playerTurn == 0)
-
-    # Determine who is playing and which symbol to use
+    
+    # Determine who's playing and print appropriate label
     if is_first_turn and get_current_stone(players, playerTurn) == 'W':
-        print("Player 2, Black")
-        current_turn = playerTurn + 1
-
+        print("Player 2, Black")  # Black starts first, player chose White
+        choiceRow, choiceCol = get_user_placement()
+        playerTurn += 1
+        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
+        check_win(grid, row, col, get_current_stone(players, playerTurn))
+    
     elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'W':
         print("Player 1, White")
-        current_turn = playerTurn - 1
-
+        choiceRow, choiceCol = get_user_placement()
+        playerTurn -= 1
+        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
+        check_win(grid, row, col, get_current_stone(players, playerTurn-1))
+    
     elif is_first_turn and get_current_stone(players, playerTurn) == 'B':
-        print("Player 1, Black")
-        current_turn = playerTurn
-
+        print("Player 1, Black")  # Player chose Black and goes first
+        choiceRow, choiceCol = get_user_placement()
+        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
+        check_win(grid, row, col, get_current_stone(players, playerTurn))
+        playerTurn += 1
+    
     elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'B':
         print("Player 2, White")
-        current_turn = playerTurn
+        choiceRow, choiceCol = get_user_placement()
+        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
+        check_win(grid, row, col, get_current_stone(players, playerTurn-1))
+        playerTurn -= 1
 
-    else:
-        return playerTurn  # Safety net; shouldn't hit this
-
-    # Ask for placement and place the stone
-    choiceRow, choiceCol = get_user_placement()
-    row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, current_turn))
-
-    # Check for win just once
-    check_win(grid, row, col, get_current_stone(players, current_turn))
-
-    # Update turn
-    return current_turn
+    
+    return playerTurn
 
 def game_engine(grid, players, playerTurn):
     
