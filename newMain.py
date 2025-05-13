@@ -10,20 +10,6 @@ ID 23178823
 
 """
 
-# X
-@dataclass(eq=True, frozen=True)
-class B:
-    def __str__(self):
-         return "B"
-    # O
-@dataclass(eq=True, frozen=True)
-class W:
-    def __str__(self):
-         return "W"
-# Let Token = {B} U {W}
-# Let Token = {B, W}
-Stone: TypeAlias = B | W
-
 
 def create_grid():
     rows: int=14 
@@ -60,9 +46,9 @@ def is_valid_position(grid, r, c):
     else:
         return False
 
-def update_grid(grid, r, c, new_char):
+def update_grid(grid, r, c, stone):
     """Replace the '+' at position (r, c) with the new character."""
-    return grid[r][:c] + [new_char] + grid[r][c + 1:]
+    return grid[r][:c] + [stone] + grid[r][c + 1:]
 
 def place_stone(grid, row, col, stone):
     
@@ -73,21 +59,18 @@ def place_stone(grid, row, col, stone):
         return r, c
     
         
+def count_in_direction(grid, r, c, dr, dc, targetChar, i=1):
+    nr, nc = r + dr * i, c + dc * i
 
+    if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == targetChar:
+        return 1 + count_in_direction(grid, r, c, dr, dc, targetChar, i + 1)
+    else:
+        return 0
         
 def count_direction(grid,dr, dc,r,c, target_char):
-    count = 0
-    i = 1
-    while True:
-        nr, nc = r + dr * i, c + dc * i  # Move in the given direction
-        # Stop if out of bounds or character mismatch
-        if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == target_char:
-            count += 1
-            i += 1
-        else:
-            break
+    count = count_in_direction(grid, r, c, dr, dc, target_char)
     return count
-def check_win(grid, r, c, players):
+def check_win(grid, r, c, currStone):
     # Helper to count matching characters in a direction
     
 
@@ -102,8 +85,8 @@ def check_win(grid, r, c, players):
     # For each direction, check both forward and backward counts
     for dRow, dColumn in directions:
         total = 1  # Start with the placed marker
-        total += count_direction(grid,dRow, dColumn,r,c,players)       # Count forward
-        total += count_direction(grid,-dRow, -dColumn,r,c,players)     # Count backward
+        total += count_direction(grid,dRow, dColumn,r,c,currStone)       # Count forward
+        total += count_direction(grid,-dRow, -dColumn,r,c,currStone)     # Count backward
         if total >= 5:
             print(f"\n Player wins with 5 in a row!")
             return True  # Win detected
@@ -141,90 +124,50 @@ def get_current_stone(players, playerTurn):
 
 def handle_turn(grid, players, playerTurn):
     #current_stone = get_current_stone(players, playerTurn)
+    
     is_first_turn = (playerTurn == 0)
-    
-    # Determine who's playing and print appropriate label
+
+    # Determine who is playing and which symbol to use
     if is_first_turn and get_current_stone(players, playerTurn) == 'W':
-        print("Player 2, Black")  # Black starts first, player chose White
-        choiceRow, choiceCol = get_user_placement()
-        playerTurn += 1
-        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
-    
+        print("Player 2, Black")
+        current_turn = playerTurn + 1
+
     elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'W':
         print("Player 1, White")
-        choiceRow, choiceCol = get_user_placement()
-        playerTurn -= 1
-        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
-    
+        current_turn = playerTurn - 1
+
     elif is_first_turn and get_current_stone(players, playerTurn) == 'B':
-        print("Player 1, Black")  # Player chose Black and goes first
-        choiceRow, choiceCol = get_user_placement()
-        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
-        playerTurn += 1
-    
+        print("Player 1, Black")
+        current_turn = playerTurn
+
     elif not is_first_turn and get_current_stone(players, playerTurn - 1) == 'B':
         print("Player 2, White")
-        choiceRow, choiceCol = get_user_placement()
-        row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, playerTurn))
-        playerTurn -= 1
+        current_turn = playerTurn
 
-    return playerTurn
+    else:
+        return playerTurn  # Safety net; shouldn't hit this
+
+    # Ask for placement and place the stone
+    choiceRow, choiceCol = get_user_placement()
+    row, col = place_stone(grid, choiceRow, choiceCol, get_current_stone(players, current_turn))
+
+    # Check for win just once
+    check_win(grid, row, col, get_current_stone(players, current_turn))
+
+    # Update turn
+    return current_turn
 
 def game_engine(grid, players, playerTurn):
     
     print_grid(grid)  # Show the current grid state
     try:
-        # Get row and column input from user
         
-        #playerStone = get_player_stone(players, playerTurn)
-        #print(type(playerStone))
-        """
-        if(playerTurn == 0 and get_current_stone(players, playerTurn) == 'W'):
-            #player chose white but black starts first
-            print("Player 2, Black")
-            choiceRow,choiceCol = get_user_placement()
-            playerTurn +=1
-            row, col = place_stone(grid, choiceRow,choiceCol, get_current_stone(players, playerTurn ))
-            
-            game_engine(grid, players, playerTurn)
-            
-        
-        if(playerTurn == 1 and get_current_stone(players, playerTurn-1) == 'W'):
-            print("Player 1, White")
-            choiceRow,choiceCol = get_user_placement()
-            playerTurn -=1
-            row, col = place_stone(grid, choiceRow,choiceCol, get_current_stone(players, playerTurn ))
-            
-            game_engine(grid, players, playerTurn)
-            
-        if(playerTurn == 0 and get_current_stone(players, playerTurn) == 'B'):
-            #player chose black and black starts first
-            print("Player 1, Black")
-            choiceRow,choiceCol = get_user_placement()
-            row, col = place_stone(grid, choiceRow,choiceCol, get_current_stone(players, playerTurn ))
-            
-            playerTurn +=1
-            game_engine(grid, players, playerTurn)
-            
-        
-            
-            
-        if(playerTurn == 1 and get_current_stone(players, playerTurn-1) == 'B'):
-            print("Player 2, White")
-            choiceRow,choiceCol = get_user_placement()
-            row, col = place_stone(grid, choiceRow,choiceCol, get_current_stone(players, playerTurn ))
-           
-            playerTurn -=1
-            game_engine(grid, players, playerTurn)
-            
-       """
-       
         game_engine(grid, players, handle_turn(grid, players, playerTurn))
        
             
         
-    except TypeError:
-        print("cannot unpack non iterable non type")
+    except TypeError: 
+        print("Cannot place a stone over existing stones, yours or opponents")
         game_engine(grid, players, playerTurn)
     except ValueError:
         print("Invalid input. Use numbers for coordinates.")
@@ -237,12 +180,10 @@ def game_engine(grid, players, playerTurn):
 
 def main():
     playerTurn = 0
-    #valid_choices = {'B', 'W'}
     
     players =  list(choose_players_colours())
     grid = create_grid()  # Initialize the grid
     
-    #print(players.__getitem__(playerTurn))
     
     game_engine(grid, players, playerTurn)
 
