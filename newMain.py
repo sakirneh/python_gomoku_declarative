@@ -96,7 +96,7 @@ def choose_players_colours():
     """Ask Player 1 to choose 'B' or 'W', assign the other to Player 2."""
     colourChoice = ['B','W']
     
-    choice = input("Player 1, do you want to be Black (B) or White (W)? ").upper()
+    choice = input("Do you want to play as Black (B) or White (W)? ").upper()
     assign_players = lambda choice: colourChoice if choice == 'B' else list(reversed(colourChoice)) if choice == 'W' else None
 
     
@@ -196,13 +196,16 @@ def game_engine(grid, players, playerTurn):
         
 
 def main():
-    playerTurn = 0
+    #playerTurn = 0
     
-    players =  list(choose_players_colours())
-    grid = create_grid()  # Initialize the grid
+    #players =  list(choose_players_colours())
+    #grid = create_grid()  # Initialize the grid
     
     
-    game_engine(grid, players, playerTurn)
+    #game_engine(grid, players, playerTurn)
+    
+    game_engine(create_grid(), list(choose_players_colours()), 0)
+    
 
 if __name__ == "__main__":
     print(programIntroduction)
