@@ -1,0 +1,160 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May 17 17:20:51 2025
+
+@author: henrikas
+"""
+
+import sys
+import random
+from dataclasses import dataclass
+from typing import TypeAlias, Union, Optional
+
+# --- Constants ---
+GRID_SIZE = 15
+EMPTY_CELL = "."
+
+# --- Stone Types ---
+@dataclass(eq=True, frozen=True)
+class Black:
+    def __str__(self): return "B"
+
+@dataclass(eq=True, frozen=True)
+class White:
+    def __str__(self): return "W"
+
+Stone: TypeAlias = Union[Black, White]
+
+# --- Player Base ---
+class Player:
+    def __init__(self, name: str, stone: Stone):
+        self.name = name
+        self.stone = stone
+
+    def __str__(self):
+        return f"{self.name} ({self.stone})"
+
+    def get_move(self, grid) -> tuple[int, int]:
+        return get_user_move(self, grid)
+
+# --- CPU Opponent ---
+class CpuPlayer(Player):
+    def get_move(self, grid) -> tuple[int, int]:
+        return get_random_empty_coord(grid)
+
+# --- Grid Class ---
+class Grid:
+    def __init__(self, size: int = GRID_SIZE):
+        self.size = size
+        self.board = [[EMPTY_CELL for _ in range(size)] for _ in range(size)]
+
+    def display(self) -> None:
+        print("   " + " ".join(f"{i:2}" for i in range(self.size)))
+        for idx, row in enumerate(self.board):
+            print(f"{idx:2} " + " ".join(row))
+
+    def is_empty(self, r: int, c: int) -> bool:
+        return self.board[r][c] == EMPTY_CELL
+
+    def place_stone(self, r: int, c: int, stone: Stone) -> 'Grid':
+        new_grid = Grid(self.size)
+        new_grid.board = [row[:] for row in self.board]
+        new_grid.board[r][c] = str(stone)
+        return new_grid
+
+    def is_full(self) -> bool:
+        return all(cell != EMPTY_CELL for row in self.board for cell in row)
+
+    def check_winner(self, stone: Stone, r: int, c: int) -> bool:
+        directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
+        return any(self.count_consecutive(stone, r, c, dx, dy) >= 5 for dx, dy in directions)
+
+    def count_consecutive(self, stone: Stone, r: int, c: int, dx: int, dy: int) -> int:
+        count = 1
+        for direction in [1, -1]:
+            i = 1
+            while True:
+                nr, nc = r + direction * i * dx, c + direction * i * dy
+                if 0 <= nr < self.size and 0 <= nc < self.size and self.board[nr][nc] == str(stone):
+                    count += 1
+                    i += 1
+                else:
+                    break
+        return count
+
+
+# --- Input / Game Setup ---
+
+def choose_game_mode() -> str:
+    print("Select Game Mode:")
+    print("1. Player vs Player")
+    print("2. Player vs CPU")
+    while True:
+        choice = input("Enter choice (1 or 2): ").strip()
+        if choice in ("1", "2"):
+            return choice
+        print("Invalid input. Please enter 1 or 2.")
+
+def create_players(mode: str) -> tuple[Player, Player]:
+    name1 = input("Enter name for Black (B): ")
+    if mode == "1":
+        name2 = input("Enter name for White (W): ")
+        return Player(name1, Black()), Player(name2, White())
+    else:
+        return Player(name1, Black()), CpuPlayer("CPU", White())
+
+def get_user_move(player: Player, grid: Grid) -> tuple[int, int]:
+    while True:
+        try:
+            move = input(f"{player}, enter your move (row col): ")
+            r, c = map(int, move.strip().split())
+            if 0 <= r < grid.size and 0 <= c < grid.size:
+                if grid.is_empty(r, c):
+                    return r, c
+                print("Cell already occupied.")
+            else:
+                print("Move out of bounds.")
+        except ValueError:
+            print("Invalid format. Enter row and column as integers.")
+
+def get_random_empty_coord(grid: Grid) -> tuple[int, int]:
+    empty_cells = [(r, c) for r in range(grid.size) for c in range(grid.size) if grid.is_empty(r, c)]
+    return random.choice(empty_cells)
+
+# --- Game Engine ---
+
+def play_turn(player: Player, grid: Grid) -> tuple[Grid, int, int]:
+    r, c = player.get_move(grid)
+    updated_grid = grid.place_stone(r, c, player.stone)
+    return updated_grid, r, c
+
+def game_loop(player1: Player, player2: Player) -> None:
+    grid = Grid()
+    current_player = player1
+    grid.display()
+
+    while True:
+        grid, r, c = play_turn(current_player, grid)
+        grid.display()
+
+        if grid.check_winner(current_player.stone, r, c):
+            print(f"🎉 {current_player.name} wins!")
+            break
+
+        if grid.is_full():
+            print("It's a draw!")
+            break
+
+        current_player = player2 if current_player == player1 else player1
+
+# --- Main Entry Point ---
+
+def main():
+    print("Welcome to Gomoku (B = Black, W = White)")
+    mode = choose_game_mode()
+    player1, player2 = create_players(mode)
+    game_loop(player1, player2)
+
+if __name__ == "__main__":
+    main()
+
