@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed May 21 15:16:11 2025
-
-@author: henrikas
+@author: 23178823
 """
-
-import sys
+import os
 import random
 from dataclasses import dataclass
-from typing import TypeAlias, Union, Optional
+from typing import TypeAlias, Union
 
 # --- Constants ---
 GRID_SIZE = 15                   # The size of the Gomoku board (15x15 standard)
 EMPTY_CELL = "."                 # Symbol to represent an empty cell on the board
+
+# --- Utility Functions ---
+def clear_screen():
+    # Clear the terminal screen before displaying the board
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')
+    
 
 # --- Stone Types ---
 @dataclass(eq=True, frozen=True)
@@ -89,6 +95,8 @@ class Grid:
             self.board = board
 
     def display(self) -> None:
+        # Clear the screen before displaying the board
+        clear_screen()
         # Print the column numbers as header (aligned)
         col_numbers = [f"{i+1:>3}" for i in range(self.size)]
         print("   " + "".join(col_numbers))
@@ -160,22 +168,19 @@ def choose_player_colour_helper() -> str:
     return choose_player_colour_helper()
 
 def create_players(mode: str) -> tuple[Player, Player]:
-    # Prompt for player 1 name and check length
-    while True:
-        name1 = input("Enter name for Player 1: ")
-        if len(name1.strip()) >= 3:
-            break
+    # Recursive helper to get a valid player name
+    def get_valid_name(player_number: int) -> str:
+        name = input(f"Enter name for Player {player_number}: ")
+        if len(name.strip()) >= 3:
+            return name
         print("Player name must be at least 3 characters long.")
+        return get_valid_name(player_number)
+
+    name1 = get_valid_name(1)
     if mode == "1":
-        # Prompt for player 2 name and check length
-        while True:
-            name2 = input("Enter name for Player 2: ")
-            if len(name2.strip()) >= 3:
-                break
-            print("Player name must be at least 3 characters long.")
+        name2 = get_valid_name(2)
         return Player(name1, Black()), Player(name2, White())
     else:
-        # Player vs CPU: ask for color preference
         colour_choice = choose_player_colour()
         if colour_choice == "1":
             # Player chooses Black, CPU is White
@@ -222,19 +227,26 @@ def game_loop(player1: Player, player2: Player) -> None:
     # Main game loop: set up initial grid and start turn sequence
     grid = Grid()
     current_player = player1
-    grid.display()
+    
     game_loop_step(grid, current_player, player1, player2)
 
 def game_loop_step(grid: Grid, current_player: Player, player1: Player, player2: Player) -> None:
-    # Recursive turn-by-turn loop until win or draw
-    grid, r, c = play_turn(current_player, grid)
-    grid.display()
+    # Only display the board if it's a human player
+    if not isinstance(current_player, CpuPlayer):
+        grid.display()
+    
+        
 
+    grid, r, c = play_turn(current_player, grid)
+
+    # After a move, check for win/draw
     if grid.check_winner(current_player.stone, r, c):
-        print(f"🎉 {current_player.name} wins!")
+        grid.display()  # Always show the final board
+        print(f" {current_player.name} wins!")
         return
 
     if grid.is_full():
+        grid.display()  # Always show the final board
         print("It's a draw!")
         return
 
@@ -245,10 +257,14 @@ def game_loop_step(grid: Grid, current_player: Player, player1: Player, player2:
 
 def main():
     # Entry point: setup and start the game
-    print("Welcome to Gomoku (B = Black, W = White)")
+    
     mode = choose_game_mode()
     player1, player2 = create_players(mode)
     game_loop(player1, player2)
 
 if __name__ == "__main__":
+    
+    print("Welcome to Gomoku (B = Black, W = White)")
+    print("Black always goes first in Gomoku \n")
+
     main()
